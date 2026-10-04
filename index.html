@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d131b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sundowner">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d131b'/%3E%3Cpath d='M5 21h22' stroke='%23e6a53e' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='17' r='6.5' fill='none' stroke='%23e6a53e' stroke-width='2.4'/%3E%3Cpath d='M7 25l4-3M25 25l-4-3' stroke='%2392a0b0' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>KSBA Sundowner Monitor</title>
+<style>
+  :root{
+    --bg:#eef1f4; --surface:#fff; --surface-2:#f6f8fa;
+    --fg:#17202c; --muted:#59646f; --line:#d6dde4; --rail:#223042;
+    --accent:#b4660a;
+    --l0:#1d7a4d; --l1:#8a7a1e; --l2:#b4660a; --l3:#c2561f; --l4:#b2362b;
+    --l0b:#e4f2ea; --l1b:#f3efdb; --l2b:#f7ecdb; --l3b:#f8e6d9; --l4b:#f6e2df;
+    --f-disp:"Barlow Condensed",system-ui,sans-serif;
+    --f-body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0d131b; --surface:#151f2a; --surface-2:#111a24;
+    --fg:#e6edf4; --muted:#92a0b0; --line:#273440; --rail:#0a1016;
+    --accent:#e6a53e;
+    --l0:#49b586; --l1:#cdb64e; --l2:#e6a53e; --l3:#ef8a5a; --l4:#e96a5a;
+    --l0b:#13271f; --l1b:#272414; --l2b:#2a2112; --l3b:#2c1d14; --l4b:#2c1714;
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0d131b; --surface:#151f2a; --surface-2:#111a24;
+    --fg:#e6edf4; --muted:#92a0b0; --line:#273440; --rail:#0a1016;
+    --accent:#e6a53e;
+    --l0:#49b586; --l1:#cdb64e; --l2:#e6a53e; --l3:#ef8a5a; --l4:#e96a5a;
+    --l0b:#13271f; --l1b:#272414; --l2b:#2a2112; --l3b:#2c1d14; --l4b:#2c1714;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--fg);font-family:var(--f-body);
+    font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+
+  header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--rail);
+    color:#eef3f8;border-bottom:1px solid rgba(255,255,255,.08);
+    margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw)}
+  .bar-in{max-width:720px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .brand{min-width:0}
+  .brand .t{font-family:var(--f-disp);font-weight:600;letter-spacing:.03em;font-size:19px;
+    line-height:1;text-transform:uppercase}
+  .brand .s{font-size:11px;color:#9fb0c2;letter-spacing:.05em}
+  .bar .spacer{flex:1}
+  button.btn{font-family:var(--f-mono);font-size:12px;color:#dce6f0;background:transparent;
+    border:1px solid rgba(255,255,255,.22);border-radius:6px;padding:7px 11px;cursor:pointer}
+  button.btn:active{background:rgba(255,255,255,.08)}
+  button.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .now{margin-top:16px;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+    background:var(--surface)}
+  .now .top{display:flex;align-items:stretch;gap:0}
+  .now .verdict{flex:none;width:120px;display:flex;flex-direction:column;justify-content:center;
+    align-items:center;padding:14px 8px;color:#fff;text-align:center}
+  .now .verdict .lv{font-family:var(--f-disp);font-weight:600;text-transform:uppercase;
+    font-size:21px;line-height:1;letter-spacing:.02em}
+  .now .verdict .gr{font-family:var(--f-mono);font-size:13px;margin-top:5px;opacity:.95}
+  .now .detail{flex:1;min-width:0;padding:12px 14px}
+  .now .detail .hl{font-size:14px;margin:0 0 7px;text-wrap:balance}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12.5px}
+  .kv .k{color:var(--muted);font-family:var(--f-mono);font-size:11px;white-space:nowrap}
+  .kv .v{font-variant-numeric:tabular-nums}
+  .stamp{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);padding:7px 14px;
+    border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+  .window{margin-top:12px;border-radius:10px;padding:11px 14px;font-size:13.5px;
+    border:1px solid var(--line);background:var(--surface-2)}
+  .window b{font-family:var(--f-disp);text-transform:uppercase;letter-spacing:.03em;
+    font-weight:600;font-size:14px;display:block;margin-bottom:3px;color:var(--accent)}
+
+  h2.sec{font-family:var(--f-disp);text-transform:uppercase;letter-spacing:.03em;font-weight:600;
+    font-size:16px;margin:22px 0 8px;display:flex;align-items:center;gap:10px}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .chartwrap{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 8px 6px}
+  canvas{width:100%;display:block;touch-action:pan-y}
+  .readout{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);text-align:center;
+    padding:5px 4px 2px;min-height:17px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:11.5px;color:var(--muted)}
+  .legend .it{display:flex;align-items:center;gap:5px}
+  .legend .sw{width:11px;height:11px;border-radius:3px;flex:none}
+
+  .ladder{margin-top:14px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+  .ladder .lr{display:grid;grid-template-columns:78px 1fr;gap:10px;align-items:baseline;
+    padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .ladder .lr:last-child{border-bottom:0}
+  .ladder .g{font-family:var(--f-mono);font-weight:600;font-size:12px;font-variant-numeric:tabular-nums}
+  .ladder .lr small{color:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+
+  .note{margin-top:16px;color:var(--muted);font-size:12px;line-height:1.6}
+  .note code{font-family:var(--f-mono);font-size:11px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:3px;padding:1px 4px}
+  .err{margin-top:16px;border:1px solid var(--l4);background:var(--l4b);color:var(--l4);
+    border-radius:10px;padding:12px 14px;font-size:13px}
+  a{color:var(--accent)}
+  @media (max-width:430px){
+    .now .verdict{width:98px}
+    .now .verdict .lv{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <div class="t">Sundowner Monitor</div>
+      <div class="s">KSBA &middot; Santa Barbara</div>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn" id="refresh" type="button">Refresh</button>
+    <button class="btn" id="theme" type="button" aria-label="Toggle theme">Theme</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="app" aria-live="polite">
+    <div class="now"><div class="detail" style="padding:22px 14px"><p class="hl" id="loading">Loading current conditions &amp; 7-day forecast&hellip;</p></div></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- config ---------- */
+var STATIONS = {
+  KSBA:{lat:34.426, lon:-119.840},   // field (lee)
+  KBFL:{lat:35.434, lon:-119.054},   // inland, reliable SLP (primary)
+  KWJF:{lat:34.741, lon:-118.219}    // inland high desert (secondary, noisy)
+};
+var OFFSHORE=[[280,360],[0,80]];     // wind FROM = offshore/downslope at KSBA
+var ONSHORE=[[110,260]];             // normal sea breeze
+var TRIP=["2026-10-08","2026-10-10"];// arrival, departure (local days to highlight)
+var LEVELS=["LOW","WATCH","MODERATE","STRONG","EXTREME"];
+var LVAR=["--l0","--l1","--l2","--l3","--l4"];
+var LVARB=["--l0b","--l1b","--l2b","--l3b","--l4b"];
+
+/* ---------- pure logic (testable) ---------- */
+function inSector(deg,secs){ if(deg==null||isNaN(deg)) return false;
+  for(var i=0;i<secs.length;i++){ if(deg>=secs[i][0]&&deg<=secs[i][1]) return true; } return false; }
+
+function classify(grad, dir10, spd10, dir925, spd925, gust){
+  // grad = KBFL - KSBA sea-level pressure (mb). Offshore wind confirms a real event.
+  var off10 = inSector(dir10,OFFSHORE) && spd10>=5;
+  var off925 = inSector(dir925,OFFSHORE) && spd925>=20;
+  var off = off10 || off925;
+  if(!off){ return (grad>=3)?1:0; }           // no offshore wind: watch only if pressure building hard
+  var lvl;
+  if(grad>=5) lvl=4; else if(grad>=3) lvl=3; else if(grad>=2) lvl=2;
+  else if(grad>=1) lvl=2; else lvl=1;          // offshore wind present but weak gradient
+  if(gust>=30 && lvl<4) lvl+=1;                // strong gusts bump one level
+  return lvl;
+}
+
+function nearestNowIndex(times, nowSec){
+  if(nowSec<=times[0]) return 0;
+  for(var i=0;i<times.length-1;i++){ if(nowSec>=times[i] && nowSec<times[i+1]) return i; }
+  return times.length-1;
+}
+
+function findNextWindow(levels, startIdx){
+  // first contiguous run at level>=2 at or after startIdx
+  for(var i=startIdx;i<levels.length;i++){
+    if(levels[i]>=2){
+      var j=i; while(j+1<levels.length && levels[j+1]>=2) j++;
+      return {start:i,end:j};
+    }
+  }
+  return null;
+}
+
+/* ---------- fetch + assemble ---------- */
+function omURL(){
+  var lats=[],lons=[];
+  ["KSBA","KBFL","KWJF"].forEach(function(k){lats.push(STATIONS[k].lat);lons.push(STATIONS[k].lon);});
+  var hourly=["pressure_msl","wind_speed_10m","wind_direction_10m","wind_gusts_10m",
+    "wind_speed_925hPa","wind_direction_925hPa","wind_speed_850hPa","wind_direction_850hPa","temperature_2m"];
+  return "https://api.open-meteo.com/v1/forecast"
+    +"?latitude="+lats.join(",")+"&longitude="+lons.join(",")
+    +"&hourly="+hourly.join(",")
+    +"&forecast_days=7&timeformat=unixtime&timezone=America%2FLos_Angeles"
+    +"&wind_speed_unit=kn&temperature_unit=fahrenheit";
+}
+
+function assemble(resp){
+  // resp is an array [KSBA,KBFL,KWJF]
+  var S=resp[0], B=resp[1], W=resp[2];
+  var t=S.hourly.time, off=S.utc_offset_seconds||0, n=t.length;
+  var out={times:t, tzoff:off, n:n, grad:[], gradW:[], lvl:[],
+    dir10:S.hourly.wind_direction_10m, spd10:S.hourly.wind_speed_10m, gust:S.hourly.wind_gusts_10m,
+    dir925:S.hourly.wind_direction_925hPa, spd925:S.hourly.wind_speed_925hPa,
+    dir850:S.hourly.wind_direction_850hPa, spd850:S.hourly.wind_speed_850hPa,
+    pmslS:S.hourly.pressure_msl, pmslB:B.hourly.pressure_msl, pmslW:W.hourly.pressure_msl,
+    temp:S.hourly.temperature_2m};
+  for(var i=0;i<n;i++){
+    var g = +(out.pmslB[i]-out.pmslS[i]).toFixed(1);
+    var gw = +(out.pmslW[i]-out.pmslS[i]).toFixed(1);
+    out.grad.push(g); out.gradW.push(gw);
+    out.lvl.push(classify(g,out.dir10[i],out.spd10[i],out.dir925[i],out.spd925[i],out.gust[i]));
+  }
+  return out;
+}
+
+/* ---------- rendering ---------- */
+function cssv(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function dirName(d){ if(d==null) return "—"; var dirs=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  return dirs[Math.round(d/22.5)%16]; }
+function fmtLocal(ts,off,opt){ var d=new Date((ts+off)*1000);
+  var days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; var h=d.getUTCHours();
+  var hh=((h%12)||12), ap=h<12?"a":"p";
+  if(opt==="dh") return days[d.getUTCDay()]+" "+hh+ap;
+  if(opt==="time") return hh+ap;
+  return days[d.getUTCDay()]+" "+(d.getUTCMonth()+1)+"/"+d.getUTCDate();
+}
+function localDayStr(ts,off){ var d=new Date((ts+off)*1000);
+  return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0"); }
+
+function verdictText(lvl,g,off10,off925){
+  if(lvl===0) return "Benign — onshore/light. No Sundowner signature.";
+  if(lvl===1) return "Watch — "+(g>=3?"pressure gradient building, but the field wind hasn't turned offshore yet.":"a hint of offshore flow; gradient weak.");
+  if(lvl===2) return "Moderate — offshore flow with a real gradient. Expect gusty, turbulent arrivals.";
+  if(lvl===3) return "Strong — downslope windstorm likely. Gusty at the field, severe on the slopes.";
+  return "Extreme — Santa Ana-class offshore event. Expect severe wind and turbulence.";
+}
+
+function render(d){
+  var now=Math.floor(Date.now()/1000);
+  var ci=nearestNowIndex(d.times, now);
+  var lvl=d.lvl[ci], g=d.grad[ci], gw=d.gradW[ci];
+  var dir=d.dir10[ci], spd=d.spd10[ci], gust=d.gust[ci];
+  var d925=d.dir925[ci], s925=d.spd925[ci];
+  var off10=inSector(dir,OFFSHORE)&&spd>=5, off925=inSector(d925,OFFSHORE)&&s925>=20;
+  var windState = off10?"offshore":(inSector(dir,ONSHORE)?"onshore":"cross/variable");
+  var lc=cssv(LVAR[lvl]);
+
+  var nextW=findNextWindow(d.lvl, ci+1);
+  var windowHTML="";
+  if(nextW){
+    var pk=nextW.start; for(var i=nextW.start;i<=nextW.end;i++){ if(d.grad[i]>d.grad[pk]) pk=i; }
+    var pg=0; for(var i2=nextW.start;i2<=nextW.end;i2++){ if(d.gust[i2]>pg) pg=d.gust[i2]; }
+    windowHTML='<div class="window"><b>Next elevated window</b>'
+      +fmtLocal(d.times[nextW.start],d.tzoff,"dh")+' – '+fmtLocal(d.times[nextW.end]+3600,d.tzoff,"dh")
+      +' · peak '+LEVELS[d.lvl[pk]]+' ('+(d.grad[pk]>=0?"+":"")+d.grad[pk]+' mb, gusts to '+Math.round(pg)+' kt)</div>';
+  } else {
+    windowHTML='<div class="window"><b>Next elevated window</b>None in the 7-day forecast — benign through '
+      +fmtLocal(d.times[d.n-1],d.tzoff,"date")+'.</div>';
+  }
+
+  var app=document.getElementById("app");
+  app.innerHTML=
+    '<div class="now"><div class="top">'
+      +'<div class="verdict" style="background:'+lc+'"><span class="lv">'+LEVELS[lvl]+'</span>'
+        +'<span class="gr">'+(g>=0?"+":"")+g+' mb</span></div>'
+      +'<div class="detail"><p class="hl">'+verdictText(lvl,g,off10,off925)+'</p>'
+        +'<div class="kv">'
+          +'<span class="k">KSBA wind</span><span class="v">'+(dir==null?"calm":Math.round(dir)+"° "+dirName(dir)+" / "+Math.round(spd)+(gust?("G"+Math.round(gust)):"")+" kt")+' <span style="color:var(--muted)">['+windState+']</span></span>'
+          +'<span class="k">925mb flow</span><span class="v">'+Math.round(d925)+"° "+dirName(d925)+" / "+Math.round(s925)+' kt'+(off925?' <span style="color:'+cssv("--l2")+'">offshore</span>':'')+'</span>'
+          +'<span class="k">Gradient</span><span class="v">KBFL−KSBA '+(g>=0?"+":"")+g+' mb &nbsp;<span style="color:var(--muted)">(KWJF '+(gw>=0?"+":"")+gw+')</span></span>'
+        +'</div></div>'
+      +'</div>'
+      +'<div class="stamp"><span>Now: '+fmtLocal(d.times[ci],d.tzoff,"date")+' '+fmtLocal(d.times[ci],d.tzoff,"time")+' PT</span>'
+        +'<span id="updated"></span></div>'
+    +'</div>'
+    +windowHTML
+    +'<h2 class="sec">7-Day Gradient &amp; Wind</h2>'
+    +'<div class="chartwrap"><canvas id="chart" height="240"></canvas><div class="readout" id="readout">Tap the chart to read any hour</div></div>'
+    +'<div class="legend" id="legend"></div>'
+    +'<div class="ladder">'
+      +ladderRow("≤ 0","--l0","Benign — onshore sea-breeze (baseline −0.4)")
+      +ladderRow("+1 to +2","--l2","Moderate — offshore flow + gradient (SWEX Apr’18 ~+1.8)")
+      +ladderRow("+3 to +5","--l3","Strong — defer (Thomas Fire Dec’17 ~+4.8)")
+      +ladderRow("&gt; +5","--l4","Extreme — Santa Ana-class")
+    +'</div>'
+    +'<div class="note">Gradient = Bakersfield minus Santa Barbara sea-level pressure (KBFL is the reliable reference; KWJF shown for context but discounted — high-desert readings run high on calm nights). A level above <b>Watch</b> requires an offshore wind component (10&#8201;m or 925&#8201;mb) to confirm, so pressure alone won’t trip a false alarm. The field under-reads the event; the ridge is worse. '
+      +'Rules of thumb — the <a href="https://forecast.weather.gov/product.php?site=LOX&issuedby=LOX&product=AFD" target="_blank" rel="noopener">NWS LA/Oxnard AFD</a> and any South Coast wind advisory are the authoritative call. '
+      +'Forecast: Open-Meteo (GFS). Current wind should be cross-checked against the KSBA METAR/ATIS.</div>';
+
+  document.getElementById("updated").textContent="Updated "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  buildLegend();
+  drawChart(d, ci);
+  try{ localStorage.setItem("sdw_cache", JSON.stringify({t:Date.now(), d:d})); }catch(e){}
+}
+
+function ladderRow(g,v,txt){
+  return '<div class="lr"><span class="g" style="color:'+cssv(v)+'">'+g+'</span><span>'+txt+'</span></div>';
+}
+function buildLegend(){
+  var el=document.getElementById("legend"); var h="";
+  for(var i=0;i<5;i++){ h+='<span class="it"><span class="sw" style="background:'+cssv(LVAR[i])+'"></span>'+LEVELS[i]+'</span>'; }
+  h+='<span class="it"><span class="sw" style="background:var(--muted);border-radius:50%"></span>offshore hr</span>';
+  el.innerHTML=h;
+}
+
+/* ---------- chart ---------- */
+var CH={d:null, ci:0, geom:null};
+function drawChart(d, ci){
+  CH.d=d; CH.ci=ci;
+  var cv=document.getElementById("chart");
+  var dpr=window.devicePixelRatio||1;
+  var cssW=cv.clientWidth, cssH=240;
+  cv.width=cssW*dpr; cv.height=cssH*dpr;
+  var x=cv.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,cssW,cssH);
+
+  var padL=30,padR=30,padT=14,padB=26;
+  var W=cssW-padL-padR, H=cssH-padT-padB;
+  var n=d.n;
+  var gmin=-2, gmax=Math.max(6, Math.ceil(Math.max.apply(null,d.grad)) );
+  var gust=d.gust, gustMax=Math.max(40, Math.ceil(Math.max.apply(null,gust)/10)*10);
+  var fg=cssv("--fg"), mut=cssv("--muted"), line=cssv("--line");
+  function X(i){ return padL + (i/(n-1))*W; }
+  function Yg(v){ return padT + (1-(v-gmin)/(gmax-gmin))*H; }
+  function Ygust(v){ return padT + (1-v/gustMax)*H; }
+  CH.geom={padL:padL,padR:padR,padT:padT,W:W,H:H,n:n,X:X};
+
+  // trip-day shading
+  for(var i=0;i<n;i++){
+    var day=localDayStr(d.times[i],d.tzoff);
+    if(TRIP.indexOf(day)>=0){
+      x.fillStyle=cssv("--surface-2");
+      var x0=X(i)-(W/(n-1))/2, x1=X(i)+(W/(n-1))/2;
+      x.fillRect(x0,padT,x1-x0,H);
+    }
+  }
+  // threshold gridlines
+  [0,2,3,5].forEach(function(v){ if(v<gmin||v>gmax) return;
+    x.strokeStyle=line; x.lineWidth=(v===0?1:0.6); x.beginPath();
+    x.moveTo(padL,Yg(v)); x.lineTo(padL+W,Yg(v)); x.stroke();
+    x.fillStyle=mut; x.font="10px "+cssv("--f-mono"); x.textAlign="right"; x.textBaseline="middle";
+    x.fillText((v>0?"+":"")+v,padL-5,Yg(v));
+  });
+  // day boundaries + labels
+  var lastDay="";
+  for(var i3=0;i3<n;i3++){
+    var day=localDayStr(d.times[i3],d.tzoff);
+    if(day!==lastDay){
+      lastDay=day;
+      x.strokeStyle=line; x.lineWidth=0.5; x.beginPath(); x.moveTo(X(i3),padT); x.lineTo(X(i3),padT+H); x.stroke();
+      x.fillStyle=mut; x.font="10px "+cssv("--f-mono"); x.textAlign="left"; x.textBaseline="top";
+      x.fillText(fmtLocal(d.times[i3],d.tzoff,"date").split(" ")[0],X(i3)+3,padT+H+5);
+    }
+  }
+  // gradient colored area (segment by level)
+  for(var i4=0;i4<n-1;i4++){
+    var lv=d.lvl[i4];
+    x.fillStyle=cssv(LVARB[lv]);
+    x.beginPath();
+    x.moveTo(X(i4),Yg(Math.max(gmin,Math.min(gmax,d.grad[i4]))));
+    x.lineTo(X(i4+1),Yg(Math.max(gmin,Math.min(gmax,d.grad[i4+1]))));
+    x.lineTo(X(i4+1),Yg(0)); x.lineTo(X(i4),Yg(0)); x.closePath(); x.fill();
+  }
+  // gradient line (segment colored by level)
+  x.lineWidth=1.8;
+  for(var i5=0;i5<n-1;i5++){
+    x.strokeStyle=cssv(LVAR[d.lvl[i5]]);
+    x.beginPath(); x.moveTo(X(i5),Yg(d.grad[i5])); x.lineTo(X(i5+1),Yg(d.grad[i5+1])); x.stroke();
+  }
+  // gust thin line (secondary)
+  x.strokeStyle=mut; x.globalAlpha=.55; x.lineWidth=0.9; x.beginPath();
+  for(var i6=0;i6<n;i6++){ var px=X(i6),py=Ygust(gust[i6]); if(i6===0)x.moveTo(px,py); else x.lineTo(px,py); }
+  x.stroke(); x.globalAlpha=1;
+  x.fillStyle=mut; x.font="10px "+cssv("--f-mono"); x.textAlign="left"; x.textBaseline="top";
+  x.fillText(gustMax+"kt gust",padL+W-46,padT+1);
+  // offshore hour dots (top)
+  for(var i7=0;i7<n;i7++){
+    var off = (inSector(d.dir10[i7],OFFSHORE)&&d.spd10[i7]>=5)||(inSector(d.dir925[i7],OFFSHORE)&&d.spd925[i7]>=20);
+    if(off){ x.fillStyle=mut; x.beginPath(); x.arc(X(i7),padT+3,1.6,0,6.28); x.fill(); }
+  }
+  // now marker
+  x.strokeStyle=fg; x.lineWidth=1.2; x.setLineDash([3,3]); x.beginPath();
+  x.moveTo(X(ci),padT); x.lineTo(X(ci),padT+H); x.stroke(); x.setLineDash([]);
+
+  CH.Yg=Yg;
+}
+
+function chartReadAt(clientX){
+  var d=CH.d, g=CH.geom; if(!d||!g) return;
+  var cv=document.getElementById("chart"); var r=cv.getBoundingClientRect();
+  var rel=(clientX-r.left-g.padL)/g.W; rel=Math.max(0,Math.min(1,rel));
+  var i=Math.round(rel*(g.n-1));
+  var ro=document.getElementById("readout");
+  ro.textContent=fmtLocal(d.times[i],d.tzoff,"date")+" "+fmtLocal(d.times[i],d.tzoff,"time")+" PT  ·  "
+    +LEVELS[d.lvl[i]]+"  ·  "+(d.grad[i]>=0?"+":"")+d.grad[i]+" mb  ·  "
+    +(d.dir10[i]==null?"calm":Math.round(d.dir10[i])+"°/"+Math.round(d.spd10[i])+(d.gust[i]?("G"+Math.round(d.gust[i])):"")+"kt");
+}
+document.addEventListener("click",function(e){ if(e.target&&e.target.id==="chart") chartReadAt(e.clientX); });
+document.addEventListener("touchmove",function(e){ if(e.target&&e.target.id==="chart"&&e.touches[0]){ chartReadAt(e.touches[0].clientX); } },{passive:true});
+
+/* ---------- load ---------- */
+function showError(msg){
+  document.getElementById("app").innerHTML='<div class="err"><b>Couldn’t load the forecast.</b><br>'+msg
+    +'<br><br>Tap <b>Refresh</b> to retry.</div>'+cachedNote();
+}
+function cachedNote(){
+  try{ var c=JSON.parse(localStorage.getItem("sdw_cache")); if(c&&c.d){
+    return '<div class="note">Showing nothing live right now. Last good data was '
+      +new Date(c.t).toLocaleString()+'. Retry when you have a connection.</div>'; } }catch(e){}
+  return "";
+}
+function load(){
+  var app=document.getElementById("app");
+  var l=document.getElementById("loading"); if(l) l.textContent="Loading current conditions & 7-day forecast…";
+  fetch(omURL(),{cache:"no-store"}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status); return r.json();
+  }).then(function(j){
+    var arr = Array.isArray(j)?j:[j];
+    if(arr.length<3 || !arr[0].hourly) throw new Error("Unexpected data shape.");
+    render(assemble(arr));
+  }).catch(function(e){ showError(String(e.message||e)); });
+}
+
+/* ---------- controls ---------- */
+document.getElementById("refresh").addEventListener("click",load);
+document.getElementById("theme").addEventListener("click",function(){
+  var root=document.documentElement, cur=root.getAttribute("data-theme");
+  var sysDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;
+  var isDark = cur ? cur==="dark" : sysDark;
+  root.setAttribute("data-theme", isDark?"light":"dark");
+  if(CH.d){ render(CH.d); }   // redraw with new theme colors
+});
+window.addEventListener("resize",function(){ if(CH.d) drawChart(CH.d,CH.ci); });
+document.addEventListener("visibilitychange",function(){ if(!document.hidden) load(); });
+load();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</body>
+</html>
