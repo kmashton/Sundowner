@@ -306,12 +306,13 @@ function drawChart(d, ci){
   CH.d=d; CH.ci=ci;
   var cv=document.getElementById("chart");
   var dpr=window.devicePixelRatio||1;
-  var cssW=cv.clientWidth, cssH=240;
+  var cssW=cv.clientWidth, cssH=248;
   cv.width=cssW*dpr; cv.height=cssH*dpr;
+  cv.style.height=cssH+"px";          // lock display height to drawing height (prevents clipped bottom)
   var x=cv.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0);
   x.clearRect(0,0,cssW,cssH);
 
-  var padL=30,padR=30,padT=14,padB=26;
+  var padL=30,padR=30,padT=14,padB=32;
   var W=cssW-padL-padR, H=cssH-padT-padB;
   var n=d.n;
   var gmin=-2, gmax=Math.max(6, Math.ceil(Math.max.apply(null,d.grad)) );
@@ -360,9 +361,10 @@ function drawChart(d, ci){
   }
   // gradient line (segment colored by level)
   x.lineWidth=1.8;
+  var clamp=function(v){ return Math.max(gmin,Math.min(gmax,v)); };
   for(var i5=0;i5<n-1;i5++){
     x.strokeStyle=cssv(LVAR[d.lvl[i5]]);
-    x.beginPath(); x.moveTo(X(i5),Yg(d.grad[i5])); x.lineTo(X(i5+1),Yg(d.grad[i5+1])); x.stroke();
+    x.beginPath(); x.moveTo(X(i5),Yg(clamp(d.grad[i5]))); x.lineTo(X(i5+1),Yg(clamp(d.grad[i5+1]))); x.stroke();
   }
   // gust thin line (secondary)
   x.strokeStyle=mut; x.globalAlpha=.55; x.lineWidth=0.9; x.beginPath();
